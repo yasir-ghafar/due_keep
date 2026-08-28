@@ -1,4 +1,4 @@
-package com.techlad.due_keep
+package com.techlad.duekeep
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -3,14 +3,30 @@ import 'package:flutter/material.dart';
 import '../core/constants/brand.dart';
 import '../core/theme/ledger_motion.dart';
 import '../core/theme/ledger_theme.dart';
-import '../presentation/shell/theme_shell_page.dart';
+import '../data/datasources/onboarding_store.dart';
+import '../presentation/splash/splash_page.dart';
+import 'launch_flow.dart';
 import 'theme_controller.dart';
 
 class DueKeepApp extends StatefulWidget {
-  const DueKeepApp({super.key, this.themeController});
+  const DueKeepApp({
+    super.key,
+    this.themeController,
+    this.onboardingStore,
+    this.showSplash = true,
+    this.splashDuration = SplashPage.displayDuration,
+  });
 
   /// Injected in tests. The app owns one if omitted.
   final ThemeController? themeController;
+
+  /// Injected in tests. The app owns a prefs-backed store if omitted.
+  final OnboardingStore? onboardingStore;
+
+  /// When false, skip the timed splash and route immediately (tests).
+  final bool showSplash;
+
+  final Duration splashDuration;
 
   @override
   State<DueKeepApp> createState() => _DueKeepAppState();
@@ -18,6 +34,7 @@ class DueKeepApp extends StatefulWidget {
 
 class _DueKeepAppState extends State<DueKeepApp> {
   late final ThemeController _controller;
+  late final OnboardingStore _onboardingStore;
   late final bool _ownsController;
 
   @override
@@ -25,6 +42,7 @@ class _DueKeepAppState extends State<DueKeepApp> {
     super.initState();
     _ownsController = widget.themeController == null;
     _controller = widget.themeController ?? ThemeController();
+    _onboardingStore = widget.onboardingStore ?? PrefsOnboardingStore();
   }
 
   @override
@@ -48,7 +66,12 @@ class _DueKeepAppState extends State<DueKeepApp> {
           themeMode: _controller.mode,
           themeAnimationDuration: LedgerMotion.duration,
           themeAnimationCurve: LedgerMotion.curve,
-          home: ThemeShellPage(controller: _controller),
+          home: LaunchFlow(
+            themeController: _controller,
+            onboardingStore: _onboardingStore,
+            showSplash: widget.showSplash,
+            splashDuration: widget.splashDuration,
+          ),
         );
       },
     );
