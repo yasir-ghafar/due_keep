@@ -24,6 +24,8 @@ class LedgerColors extends ThemeExtension<LedgerColors> {
     required this.bill,
     required this.warranty,
     required this.other,
+    required this.tabBar,
+    required this.tabOn,
   });
 
   final Color paper;
@@ -44,6 +46,10 @@ class LedgerColors extends ThemeExtension<LedgerColors> {
   final Color warranty;
   final Color other;
 
+  /// Floating pill tab bar. Light: ink. Dark: same pine as the primary button.
+  final Color tabBar;
+  final Color tabOn;
+
   static const light = LedgerColors(
     paper: LedgerPalette.paper,
     card: LedgerPalette.card,
@@ -62,6 +68,8 @@ class LedgerColors extends ThemeExtension<LedgerColors> {
     bill: LedgerPalette.bill,
     warranty: LedgerPalette.amber,
     other: LedgerPalette.mute,
+    tabBar: LedgerPalette.ink,
+    tabOn: LedgerPalette.paper,
   );
 
   static const dark = LedgerColors(
@@ -82,6 +90,8 @@ class LedgerColors extends ThemeExtension<LedgerColors> {
     bill: LedgerPalette.billDark,
     warranty: LedgerPalette.amberDark,
     other: LedgerPalette.muteDark,
+    tabBar: LedgerPalette.pineLight,
+    tabOn: LedgerPalette.night,
   );
 
   @override
@@ -103,6 +113,8 @@ class LedgerColors extends ThemeExtension<LedgerColors> {
     Color? bill,
     Color? warranty,
     Color? other,
+    Color? tabBar,
+    Color? tabOn,
   }) {
     return LedgerColors(
       paper: paper ?? this.paper,
@@ -122,6 +134,8 @@ class LedgerColors extends ThemeExtension<LedgerColors> {
       bill: bill ?? this.bill,
       warranty: warranty ?? this.warranty,
       other: other ?? this.other,
+      tabBar: tabBar ?? this.tabBar,
+      tabOn: tabOn ?? this.tabOn,
     );
   }
 
@@ -146,6 +160,8 @@ class LedgerColors extends ThemeExtension<LedgerColors> {
       bill: Color.lerp(bill, other.bill, t)!,
       warranty: Color.lerp(warranty, other.warranty, t)!,
       other: Color.lerp(this.other, other.other, t)!,
+      tabBar: Color.lerp(tabBar, other.tabBar, t)!,
+      tabOn: Color.lerp(tabOn, other.tabOn, t)!,
     );
   }
 }

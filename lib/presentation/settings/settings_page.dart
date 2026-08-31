@@ -1,65 +1,64 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme_controller.dart';
-import '../../core/constants/brand.dart';
 import '../../core/extensions/build_context_x.dart';
-import '../widgets/vault_mark.dart';
 
-/// Phase 0 shell: paper field, wordmark, one pine button, theme switch.
-/// Real screens replace this in phase 1.
-class ThemeShellPage extends StatelessWidget {
-  const ThemeShellPage({super.key, required this.controller});
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key, required this.themeController});
 
-  final ThemeController controller;
+  final ThemeController themeController;
 
   @override
   Widget build(BuildContext context) {
     final ledger = context.ledger;
     final texts = context.texts;
 
-    return Scaffold(
-      backgroundColor: ledger.paper,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
-            children: [
-              const Spacer(flex: 3),
-              VaultMark(size: 28, color: ledger.ink),
-              const SizedBox(height: 20),
-              Text(
-                Brand.name,
-                style: texts.headlineMedium?.copyWith(
-                  letterSpacing: -0.6,
-                  color: ledger.ink,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                Brand.tagline,
-                style: texts.bodyLarge?.copyWith(color: ledger.mute),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 36),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Nothing due this week. That's the point."),
-                      ),
-                    );
-                  },
-                  child: const Text('Add a renewal'),
-                ),
-              ),
-              const Spacer(flex: 4),
-              _ThemeModeRow(controller: controller),
-              const SizedBox(height: 24),
-            ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Settings',
+            style: texts.headlineMedium?.copyWith(
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.84,
+              color: ledger.ink,
+            ),
           ),
-        ),
+          const SizedBox(height: 24),
+          Text(
+            'Preferences',
+            style: texts.labelSmall?.copyWith(
+              fontSize: 12,
+              letterSpacing: 0.96,
+              fontWeight: FontWeight.w600,
+              color: ledger.mute,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            decoration: BoxDecoration(
+              color: ledger.card,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: ledger.line),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Appearance',
+                  style: texts.bodyLarge?.copyWith(fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                _ThemeModeRow(controller: themeController),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -78,7 +77,6 @@ class _ThemeModeRow extends StatelessWidget {
       listenable: controller,
       builder: (context, _) {
         return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             for (final option in ThemeMode.values) ...[
               if (option != ThemeMode.values.first)

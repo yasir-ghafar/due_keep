@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/ledger_motion.dart';
 import '../data/datasources/onboarding_store.dart';
 import '../presentation/onboarding/onboarding_page.dart';
-import '../presentation/shell/theme_shell_page.dart';
+import '../presentation/shell/app_shell.dart';
 import '../presentation/splash/splash_page.dart';
 import 'theme_controller.dart';
 
@@ -71,8 +71,8 @@ class _LaunchFlowState extends State<LaunchFlow> {
               store: widget.onboardingStore,
               onFinished: _onOnboardingFinished,
             ),
-          LaunchPhase.shell => ThemeShellPage(
-              controller: widget.themeController,
+          LaunchPhase.shell => AppShell(
+              themeController: widget.themeController,
             ),
         },
       ),

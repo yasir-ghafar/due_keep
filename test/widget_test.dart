@@ -36,7 +36,9 @@ void main() {
     );
   });
 
-  testWidgets('onboarding walks three screens then opens the shell', (tester) async {
+  testWidgets('onboarding walks three screens then opens empty home', (
+    tester,
+  ) async {
     await tester.pumpWidget(_app(onboarded: false));
     await tester.pumpAndSettle();
 
@@ -65,16 +67,50 @@ void main() {
     await tester.tap(find.text('Not now'));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(FilledButton, 'Add a renewal'), findsOneWidget);
+    expect(find.text('Upcoming'), findsOneWidget);
+    expect(
+      find.widgetWithText(FilledButton, 'Add your first renewal'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('shell shows wordmark, tagline, and pine button', (tester) async {
+  testWidgets('empty home shows first-add copy', (tester) async {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
 
-    expect(find.text(Brand.name), findsOneWidget);
-    expect(find.text(Brand.tagline), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'Add a renewal'), findsOneWidget);
+    expect(find.text('Upcoming'), findsOneWidget);
+    expect(
+      find.text('Nothing due this week. That’s the point.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Add a bill, subscription, or warranty. We’ll keep the date.'),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(FilledButton, 'Add your first renewal'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('first add opens method sheet then manual editor', (tester) async {
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add your first renewal'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add a renewal'), findsOneWidget);
+    expect(find.text('Scan document'), findsOneWidget);
+    expect(find.text('Choose screenshot'), findsOneWidget);
+    expect(find.text('Enter manually'), findsOneWidget);
+
+    await tester.tap(find.text('Enter manually'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New item'), findsOneWidget);
+    expect(find.text('Vendor'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
   });
 
   testWidgets('light theme uses paper and pine', (tester) async {
@@ -91,12 +127,13 @@ void main() {
     expect(colors.pine, LedgerPalette.pine);
     expect(colors.onPine, LedgerPalette.white);
     expect(colors.text, LedgerPalette.text);
+    expect(colors.tabBar, LedgerPalette.ink);
+    expect(colors.tabOn, LedgerPalette.paper);
 
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     expect(scaffold.backgroundColor, LedgerPalette.paper);
 
-    final button = tester.widget<FilledButton>(find.byType(FilledButton));
-    final style = button.style ?? materialApp.theme!.filledButtonTheme.style;
+    final style = materialApp.theme!.filledButtonTheme.style;
     expect(
       style?.backgroundColor?.resolve({}),
       LedgerPalette.pine,
@@ -119,6 +156,8 @@ void main() {
     expect(colors.onPine, LedgerPalette.night);
     expect(colors.text, LedgerPalette.foam);
     expect(colors.clay, LedgerPalette.clayDark);
+    expect(colors.tabBar, LedgerPalette.pineLight);
+    expect(colors.tabOn, LedgerPalette.night);
 
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     expect(scaffold.backgroundColor, LedgerPalette.night);
@@ -126,6 +165,9 @@ void main() {
 
   testWidgets('theme mode labels switch light and dark', (tester) async {
     await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Dark'));
