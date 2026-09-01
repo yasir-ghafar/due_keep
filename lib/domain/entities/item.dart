@@ -41,4 +41,41 @@ class Item {
   final DateTime? lastPaidOn;
 
   bool get isActive => status == ItemStatus.active;
+
+  Item copyWith({
+    String? id,
+    String? vendor,
+    ItemCategory? category,
+    ItemCycle? cycle,
+    DateTime? nextDate,
+    ItemStatus? status,
+    double? amount,
+    String? currency,
+    List<int>? reminderOffsets,
+    String? notes,
+    String? cancelUrl,
+    List<String>? attachmentPaths,
+    DateTime? lastPaidOn,
+    bool clearAmount = false,
+    bool clearCurrency = false,
+    bool clearNotes = false,
+    bool clearCancelUrl = false,
+    bool clearLastPaidOn = false,
+  }) {
+    return Item(
+      id: id ?? this.id,
+      vendor: vendor ?? this.vendor,
+      category: category ?? this.category,
+      cycle: cycle ?? this.cycle,
+      nextDate: nextDate ?? this.nextDate,
+      status: status ?? this.status,
+      amount: clearAmount ? null : amount ?? this.amount,
+      currency: clearCurrency ? null : currency ?? this.currency,
+      reminderOffsets: reminderOffsets ?? this.reminderOffsets,
+      notes: clearNotes ? null : notes ?? this.notes,
+      cancelUrl: clearCancelUrl ? null : cancelUrl ?? this.cancelUrl,
+      attachmentPaths: attachmentPaths ?? this.attachmentPaths,
+      lastPaidOn: clearLastPaidOn ? null : lastPaidOn ?? this.lastPaidOn,
+    );
+  }
 }

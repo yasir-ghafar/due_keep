@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../app/vault_scope.dart';
 import '../../core/extensions/build_context_x.dart';
 import '../../core/extensions/date_time_x.dart';
+import '../../core/ids.dart';
 import '../../core/theme/ledger_motion.dart';
+import '../../domain/entities/item.dart';
 import '../../domain/enums/item_category.dart';
 import '../../domain/enums/item_cycle.dart';
+import '../../domain/enums/item_status.dart';
 import '../widgets/pine_button.dart';
 
 /// Manual create. Vendor and next date are required to save.
@@ -22,8 +26,10 @@ class _EditorPageState extends State<EditorPage> {
   ItemCycle _cycle = ItemCycle.monthly;
   DateTime? _nextDue;
 
+  bool _saving = false;
+
   bool get _canSave =>
-      _vendor.text.trim().isNotEmpty && _nextDue != null;
+      !_saving && _vendor.text.trim().isNotEmpty && _nextDue != null;
 
   @override
   void dispose() {
@@ -70,9 +76,34 @@ class _EditorPageState extends State<EditorPage> {
     setState(() => _cycle = picked);
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_canSave) return;
-    Navigator.of(context).pop();
+    setState(() => _saving = true);
+    final amountText = _amount.text.trim();
+    final amount = amountText.isEmpty ? null : double.tryParse(amountText);
+    try {
+      await VaultScope.of(context).save(
+        Item(
+          id: ItemIds.create(),
+          vendor: _vendor.text.trim(),
+          category: _category,
+          cycle: _cycle,
+          nextDate: _nextDue!,
+          status: ItemStatus.active,
+          amount: amount,
+          currency: amount == null ? null : 'USD',
+          reminderOffsets: const [7, 0],
+        ),
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save this item.')),
+      );
+    }
   }
 
   @override
