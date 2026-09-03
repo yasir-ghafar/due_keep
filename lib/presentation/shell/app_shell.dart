@@ -30,6 +30,15 @@ class _AppShellState extends State<AppShell> {
 
   bool get _showFab => _tab != 2;
 
+  Future<void> _scanLater() async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Scan comes later. Enter it by hand for now.'),
+      ),
+    );
+  }
+
   Future<void> _openAdd() async {
     await AddMethodSheet.show(
       context,
@@ -71,8 +80,8 @@ class _AppShellState extends State<AppShell> {
                 child: IndexedStack(
                   index: _tab,
                   children: [
-                    HomePage(onAdd: _openAdd),
-                    const VaultPage(),
+                    HomePage(onAdd: _openAdd, onScan: _scanLater),
+                    VaultPage(onAdd: _openAdd),
                     SettingsPage(themeController: widget.themeController),
                   ],
                 ),
