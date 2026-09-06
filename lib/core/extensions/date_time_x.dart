@@ -29,4 +29,7 @@ extension LedgerDateTime on DateTime {
 
   /// e.g. 25 Aug 2026
   String get dayMonthYear => '$day ${_months[month - 1]} $year';
+
+  /// e.g. Sep 2026
+  String get monthYear => '${_months[month - 1]} $year';
 }

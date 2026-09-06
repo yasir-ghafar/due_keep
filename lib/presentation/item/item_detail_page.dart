@@ -9,6 +9,7 @@ import '../../domain/item_schedule.dart';
 import '../extensions/item_category_x.dart';
 import '../extensions/item_copy_x.dart';
 import '../widgets/pine_button.dart';
+import 'mark_paid_flow.dart';
 
 class ItemDetailPage extends StatelessWidget {
   const ItemDetailPage({
@@ -265,22 +266,11 @@ class _DetailBody extends StatelessWidget {
               const SizedBox(height: 24),
               PineButton(
                 label: 'Mark paid',
-                onPressed: () async {
-                  final previous = item;
-                  await _save(context, markItemPaid(item, DateTime.now()));
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Marked ${item.vendor} paid.'),
-                      action: SnackBarAction(
-                        label: 'Undo',
-                        onPressed: () => _save(context, previous),
-                      ),
-                      duration: const Duration(seconds: 5),
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                },
+                onPressed: () => markItemPaidFlow(
+                  context,
+                  item,
+                  popAfter: true,
+                ),
               ),
               const SizedBox(height: 10),
               Row(

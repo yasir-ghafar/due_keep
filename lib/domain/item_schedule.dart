@@ -9,6 +9,17 @@ DateTime dateOnly(DateTime value) =>
 int daysUntilDue(Item item, DateTime now) =>
     dateOnly(item.nextDate).difference(dateOnly(now)).inDays;
 
+/// True when [item.nextDate] falls in a calendar month after [now].
+///
+/// Mark paid applies immediately for the current month (and overdue earlier
+/// months). Paying a future month needs an explicit confirm.
+bool isDueInFutureMonth(Item item, DateTime now) {
+  final due = dateOnly(item.nextDate);
+  final today = dateOnly(now);
+  return due.year > today.year ||
+      (due.year == today.year && due.month > today.month);
+}
+
 DateTime advanceCycle(DateTime date, ItemCycle cycle) {
   return switch (cycle) {
     ItemCycle.weekly => date.add(const Duration(days: 7)),

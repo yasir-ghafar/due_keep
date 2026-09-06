@@ -95,4 +95,28 @@ void main() {
     expect(done.status, ItemStatus.completed);
     expect(done.nextDate, warranty.nextDate);
   });
+
+  test('isDueInFutureMonth is false for current and past months', () {
+    expect(
+      isDueInFutureMonth(
+        _item(id: 'a', vendor: 'A', nextDate: DateTime(2026, 8, 30)),
+        now,
+      ),
+      isFalse,
+    );
+    expect(
+      isDueInFutureMonth(
+        _item(id: 'b', vendor: 'B', nextDate: DateTime(2026, 7, 15)),
+        now,
+      ),
+      isFalse,
+    );
+    expect(
+      isDueInFutureMonth(
+        _item(id: 'c', vendor: 'C', nextDate: DateTime(2026, 9, 1)),
+        now,
+      ),
+      isTrue,
+    );
+  });
 }

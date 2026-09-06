@@ -4,9 +4,9 @@ import '../../app/vault_scope.dart';
 import '../../core/extensions/build_context_x.dart';
 import '../../core/extensions/date_time_x.dart';
 import '../../domain/entities/item.dart';
-import '../../domain/item_schedule.dart';
 import '../extensions/item_copy_x.dart';
 import '../item/item_detail_page.dart';
+import '../item/mark_paid_flow.dart';
 import '../widgets/item_row.dart';
 import '../widgets/page_header.dart';
 import '../widgets/pine_button.dart';
@@ -129,19 +129,7 @@ class _PopulatedHome extends StatelessWidget {
   Future<void> _markNextPaid(BuildContext context) async {
     final next = timeline.next;
     if (next == null) return;
-    final repo = VaultScope.of(context);
-    await repo.save(markItemPaid(next, DateTime.now()));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Marked ${next.vendor} paid.'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () => repo.save(next),
-        ),
-        duration: const Duration(seconds: 5),
-      ),
-    );
+    await markItemPaidFlow(context, next);
   }
 
   @override

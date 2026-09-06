@@ -483,4 +483,71 @@ void main() {
     expect(find.text('Old Co'), findsNothing);
     expect(await repo.getById('old'), isNull);
   });
+
+  testWidgets('mark paid for next month asks for confirmation', (tester) async {
+    final today = _today();
+    final nextMonth = DateTime(today.year, today.month + 1, 15);
+    final repo = MemoryItemRepository(
+      seed: [
+        _item(
+          id: 'ahead',
+          vendor: 'Ahead Co',
+          category: ItemCategory.subscription,
+          nextDate: nextMonth,
+          amount: 9.99,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(_app(itemRepository: repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Ahead Co'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Mark paid'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Mark paid for'), findsOneWidget);
+    expect(find.text('Not now'), findsOneWidget);
+
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+    expect((await repo.getById('ahead'))!.lastPaidOn, isNull);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Mark paid'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Mark paid').last);
+    await tester.pumpAndSettle();
+
+    final saved = await repo.getById('ahead');
+    expect(saved!.lastPaidOn, isNotNull);
+    final expectedMonth = nextMonth.month == 12 ? 1 : nextMonth.month + 1;
+    expect(saved.nextDate.month, expectedMonth);
+  });
+
+  testWidgets('mark paid for current month applies immediately', (tester) async {
+    final today = _today();
+    final repo = MemoryItemRepository(
+      seed: [
+        _item(
+          id: 'now',
+          vendor: 'Now Co',
+          category: ItemCategory.bill,
+          nextDate: today,
+          amount: 20,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(_app(itemRepository: repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Now Co'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Mark paid'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Mark paid for'), findsNothing);
+    expect((await repo.getById('now'))!.lastPaidOn, isNotNull);
+  });
 }
