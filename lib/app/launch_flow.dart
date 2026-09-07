@@ -5,6 +5,7 @@ import '../data/datasources/onboarding_store.dart';
 import '../presentation/onboarding/onboarding_page.dart';
 import '../presentation/shell/app_shell.dart';
 import '../presentation/splash/splash_page.dart';
+import 'settings_controller.dart';
 import 'theme_controller.dart';
 
 enum LaunchPhase { splash, onboarding, shell }
@@ -14,12 +15,14 @@ class LaunchFlow extends StatefulWidget {
   const LaunchFlow({
     super.key,
     required this.themeController,
+    required this.settingsController,
     required this.onboardingStore,
     this.showSplash = true,
     this.splashDuration = SplashPage.displayDuration,
   });
 
   final ThemeController themeController;
+  final SettingsController settingsController;
   final OnboardingStore onboardingStore;
   final bool showSplash;
   final Duration splashDuration;
@@ -73,6 +76,7 @@ class _LaunchFlowState extends State<LaunchFlow> {
             ),
           LaunchPhase.shell => AppShell(
               themeController: widget.themeController,
+              settingsController: widget.settingsController,
             ),
         },
       ),

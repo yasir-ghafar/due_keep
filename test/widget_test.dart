@@ -1,9 +1,11 @@
 import 'package:due_keep/app/app.dart';
+import 'package:due_keep/app/settings_controller.dart';
 import 'package:due_keep/app/theme_controller.dart';
 import 'package:due_keep/core/constants/brand.dart';
 import 'package:due_keep/core/theme/ledger_colors.dart';
 import 'package:due_keep/core/theme/ledger_palette.dart';
 import 'package:due_keep/data/datasources/onboarding_store.dart';
+import 'package:due_keep/data/datasources/settings_store.dart';
 import 'package:due_keep/data/repositories/memory_item_repository.dart';
 import 'package:due_keep/domain/entities/item.dart';
 import 'package:due_keep/domain/enums/item_category.dart';
@@ -96,10 +98,13 @@ Widget _app({
   bool showSplash = false,
   bool onboarded = true,
   ThemeController? themeController,
+  SettingsController? settingsController,
   ItemRepository? itemRepository,
 }) {
   return DueKeepApp(
     themeController: themeController,
+    settingsController: settingsController ??
+        SettingsController(store: MemorySettingsStore()),
     onboardingStore: MemoryOnboardingStore(complete: onboarded),
     itemRepository: itemRepository,
     showSplash: showSplash,
@@ -255,6 +260,8 @@ void main() {
 
     await _openTab(tester, 'Settings');
 
+    await tester.tap(find.text('Appearance'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
     expect(
@@ -262,12 +269,104 @@ void main() {
       LedgerPalette.night,
     );
 
+    await tester.tap(find.text('Appearance'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Light'));
     await tester.pumpAndSettle();
     expect(
       tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
       LedgerPalette.paper,
     );
+  });
+
+  testWidgets('settings shows pro row, preferences, data, and about', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      _app(itemRepository: MemoryItemRepository(seed: _populatedItems())),
+    );
+    await tester.pumpAndSettle();
+    await _openTab(tester, 'Settings');
+
+    expect(find.text('DueKeep Pro'), findsOneWidget);
+    expect(find.text('Free · 4 of 5 active items'), findsOneWidget);
+    expect(find.text('Upgrade'), findsOneWidget);
+    expect(find.text('PREFERENCES'), findsOneWidget);
+    expect(find.text('Appearance'), findsOneWidget);
+    expect(find.text('Default reminder'), findsOneWidget);
+    expect(find.text('09:00'), findsOneWidget);
+    expect(find.text('Currency'), findsOneWidget);
+    expect(find.text('USD'), findsOneWidget);
+    expect(find.text('DATA'), findsOneWidget);
+    expect(find.text('Export CSV'), findsOneWidget);
+    expect(find.text('Home screen widget'), findsOneWidget);
+    expect(find.text('ABOUT'), findsOneWidget);
+    expect(find.text('Privacy'), findsOneWidget);
+    expect(find.text('This stays on your phone'), findsOneWidget);
+  });
+
+  testWidgets('settings upgrade opens paywall', (tester) async {
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+    await _openTab(tester, 'Settings');
+
+    await tester.tap(find.text('Upgrade'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Keep every due date — without a cap'),
+      findsOneWidget,
+    );
+    expect(find.text('Start 7-day trial'), findsOneWidget);
+    expect(find.text('Restore purchases'), findsOneWidget);
+
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+    expect(find.text('DueKeep Pro'), findsOneWidget);
+  });
+
+  testWidgets('settings privacy opens privacy copy', (tester) async {
+    tester.view.physicalSize = const Size(390, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+    await _openTab(tester, 'Settings');
+
+    await tester.tap(find.text('Privacy'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No account'), findsOneWidget);
+    expect(find.text('No bank login'), findsOneWidget);
+  });
+
+  testWidgets('settings currency can be changed', (tester) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final settings = SettingsController(store: MemorySettingsStore());
+    addTearDown(settings.dispose);
+
+    await tester.pumpWidget(_app(settingsController: settings));
+    await tester.pumpAndSettle();
+    await _openTab(tester, 'Settings');
+
+    await tester.tap(find.text('Currency'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('EUR'));
+    await tester.pumpAndSettle();
+
+    expect(settings.currency, 'EUR');
+    expect(find.text('EUR'), findsOneWidget);
   });
 
   testWidgets('populated home shows hero, sections, and hides paused items', (

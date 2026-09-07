@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/settings_controller.dart';
 import '../../app/theme_controller.dart';
 import '../../core/extensions/build_context_x.dart';
 import '../add/add_method_sheet.dart';
@@ -11,9 +12,14 @@ import '../widgets/pill_tab_bar.dart';
 
 /// Home · Vault · Settings with a floating pill tab bar and add FAB.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.themeController});
+  const AppShell({
+    super.key,
+    required this.themeController,
+    required this.settingsController,
+  });
 
   final ThemeController themeController;
+  final SettingsController settingsController;
 
   static const tabs = [
     ShellTab(label: 'Home', icon: Icons.calendar_month_outlined),
@@ -82,7 +88,10 @@ class _AppShellState extends State<AppShell> {
                   children: [
                     HomePage(onAdd: _openAdd, onScan: _scanLater),
                     VaultPage(onAdd: _openAdd),
-                    SettingsPage(themeController: widget.themeController),
+                    SettingsPage(
+                      themeController: widget.themeController,
+                      settingsController: widget.settingsController,
+                    ),
                   ],
                 ),
               ),
