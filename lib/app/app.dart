@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../core/constants/brand.dart';
-import '../core/theme/ledger_motion.dart';
 import '../core/theme/ledger_theme.dart';
 import '../data/datasources/onboarding_store.dart';
 import '../data/datasources/settings_store.dart';
@@ -11,6 +10,7 @@ import '../presentation/splash/splash_page.dart';
 import 'launch_flow.dart';
 import 'settings_controller.dart';
 import 'theme_controller.dart';
+import 'theme_reveal_scope.dart';
 import 'vault_scope.dart';
 
 class DueKeepApp extends StatefulWidget {
@@ -78,29 +78,36 @@ class _DueKeepAppState extends State<DueKeepApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _controller,
-      builder: (context, _) {
-        return VaultScope(
-          items: _items,
-          child: MaterialApp(
+    return VaultScope(
+      items: _items,
+      child: ListenableBuilder(
+        listenable: _controller,
+        builder: (context, child) {
+          return MaterialApp(
             title: Brand.name,
             debugShowCheckedModeBanner: false,
             theme: LedgerTheme.light(),
             darkTheme: LedgerTheme.dark(),
             themeMode: _controller.mode,
-            themeAnimationDuration: LedgerMotion.duration,
-            themeAnimationCurve: LedgerMotion.curve,
-            home: LaunchFlow(
-              themeController: _controller,
-              settingsController: _settings,
-              onboardingStore: _onboardingStore,
-              showSplash: widget.showSplash,
-              splashDuration: widget.splashDuration,
-            ),
-          ),
-        );
-      },
+            // Circular reveal owns the transition; skip MaterialApp crossfade.
+            themeAnimationStyle: AnimationStyle.noAnimation,
+            builder: (context, appChild) {
+              return ThemeRevealScope(
+                themeController: _controller,
+                child: appChild ?? const SizedBox.shrink(),
+              );
+            },
+            home: child,
+          );
+        },
+        child: LaunchFlow(
+          themeController: _controller,
+          settingsController: _settings,
+          onboardingStore: _onboardingStore,
+          showSplash: widget.showSplash,
+          splashDuration: widget.splashDuration,
+        ),
+      ),
     );
   }
 }
