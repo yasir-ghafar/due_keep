@@ -19,7 +19,16 @@ class SettingsController extends ChangeNotifier {
   String get currency => _currency;
   bool get ready => _ready;
 
-  static const currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'INR'];
+  static const currencies = [
+    'USD',
+    'EUR',
+    'GBP',
+    'CAD',
+    'AUD',
+    'JPY',
+    'INR',
+    'PKR',
+  ];
 
   Future<void> _load() async {
     _reminderTime = await _store.reminderTime();

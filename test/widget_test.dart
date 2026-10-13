@@ -260,18 +260,16 @@ void main() {
 
     await _openTab(tester, 'Settings');
 
-    await tester.tap(find.text('Appearance'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Dark'));
+    await tester.pump();
     await tester.pumpAndSettle();
     expect(
       tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
       LedgerPalette.night,
     );
 
-    await tester.tap(find.text('Appearance'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Light'));
+    await tester.pump();
     await tester.pumpAndSettle();
     expect(
       tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
@@ -362,6 +360,7 @@ void main() {
 
     await tester.tap(find.text('Currency'));
     await tester.pumpAndSettle();
+    expect(find.text('PKR'), findsOneWidget);
     await tester.tap(find.text('EUR'));
     await tester.pumpAndSettle();
 

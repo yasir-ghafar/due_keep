@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../app/settings_controller.dart';
 import '../../app/theme_controller.dart';
+import '../../app/theme_reveal_scope.dart';
 import '../../app/vault_scope.dart';
 import '../../core/constants/brand.dart';
 import '../../core/constants/free_limits.dart';
 import '../../core/extensions/build_context_x.dart';
+import '../../core/theme/ledger_motion.dart';
 import '../../domain/entities/item.dart';
 import '../../domain/enums/item_status.dart';
 import 'paywall_page.dart';
@@ -48,11 +50,7 @@ class SettingsPage extends StatelessWidget {
             ListenableBuilder(
               listenable: themeController,
               builder: (context, _) {
-                return _SettingsRow(
-                  label: 'Appearance',
-                  value: _themeLabel(themeController.mode),
-                  onTap: () => _pickAppearance(context, themeController),
-                );
+                return _AppearanceBlock(controller: themeController);
               },
             ),
             ListenableBuilder(
@@ -132,44 +130,6 @@ class SettingsPage extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  static String _themeLabel(ThemeMode mode) => switch (mode) {
-        ThemeMode.system => 'System',
-        ThemeMode.light => 'Light',
-        ThemeMode.dark => 'Dark',
-      };
-
-  static Future<void> _pickAppearance(
-    BuildContext context,
-    ThemeController controller,
-  ) async {
-    final picked = await showModalBottomSheet<ThemeMode>(
-      context: context,
-      backgroundColor: context.ledger.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final mode in ThemeMode.values)
-                ListTile(
-                  title: Text(_themeLabel(mode)),
-                  trailing: controller.mode == mode
-                      ? Icon(Icons.check, color: ctx.ledger.pine, size: 20)
-                      : null,
-                  onTap: () => Navigator.pop(ctx, mode),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-    if (picked == null) return;
-    controller.setMode(picked);
   }
 
   static Future<void> _pickReminder(
@@ -280,6 +240,109 @@ class _ProRow extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _AppearanceBlock extends StatelessWidget {
+  const _AppearanceBlock({required this.controller});
+
+  final ThemeController controller;
+
+  static String _label(ThemeMode mode) => switch (mode) {
+        ThemeMode.system => 'System',
+        ThemeMode.light => 'Light',
+        ThemeMode.dark => 'Dark',
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final ledger = context.ledger;
+    final modes = ThemeMode.values;
+    final selected = modes.indexOf(controller.mode);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: ledger.line)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Appearance',
+            style: TextStyle(fontSize: 16, color: ledger.ink),
+          ),
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth / modes.length;
+              return Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: ledger.paper,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: ledger.line),
+                ),
+                child: Stack(
+                  children: [
+                    AnimatedPositioned(
+                      duration: LedgerMotion.duration,
+                      curve: LedgerMotion.curve,
+                      left: width * selected,
+                      top: 3,
+                      bottom: 3,
+                      width: width,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: ledger.pineSoft,
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        for (final mode in modes)
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTapUp: (details) {
+                                ThemeRevealScope.of(context).setMode(
+                                  mode,
+                                  origin: details.globalPosition,
+                                );
+                              },
+                              child: Center(
+                                child: AnimatedDefaultTextStyle(
+                                  duration: LedgerMotion.duration,
+                                  curve: LedgerMotion.curve,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: controller.mode == mode
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                    color: controller.mode == mode
+                                        ? ledger.ink
+                                        : ledger.mute,
+                                  ),
+                                  child: Text(_label(mode)),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
