@@ -6,6 +6,7 @@ import '../../app/theme_reveal_scope.dart';
 import '../../app/vault_scope.dart';
 import '../../core/constants/brand.dart';
 import '../../core/constants/free_limits.dart';
+import '../../core/currency/currency_format.dart';
 import '../../core/extensions/build_context_x.dart';
 import '../../core/theme/ledger_motion.dart';
 import '../../domain/entities/item.dart';
@@ -66,9 +67,10 @@ class SettingsPage extends StatelessWidget {
             ListenableBuilder(
               listenable: settingsController,
               builder: (context, _) {
+                final code = settingsController.currency;
                 return _SettingsRow(
                   label: 'Currency',
-                  value: settingsController.currency,
+                  value: '$code · ${CurrencyFormat.symbol(code)}',
                   onTap: () => _pickCurrency(context, settingsController),
                   showDivider: false,
                 );
@@ -161,7 +163,7 @@ class SettingsPage extends StatelessWidget {
             children: [
               for (final code in SettingsController.currencies)
                 ListTile(
-                  title: Text(code),
+                  title: Text('$code · ${CurrencyFormat.symbol(code)}'),
                   trailing: controller.currency == code
                       ? Icon(Icons.check, color: ctx.ledger.pine, size: 20)
                       : null,

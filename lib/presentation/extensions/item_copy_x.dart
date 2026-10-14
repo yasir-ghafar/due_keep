@@ -1,3 +1,4 @@
+import '../../core/currency/currency_format.dart';
 import '../../domain/entities/item.dart';
 import '../../domain/enums/item_category.dart';
 import '../../domain/enums/item_cycle.dart';
@@ -50,9 +51,7 @@ extension ItemDueCopy on Item {
 
   String? get moneyLabel {
     if (amount == null) return null;
-    final value = amount!.toStringAsFixed(2);
-    if (currency == null || currency == 'USD') return '\$$value';
-    return '$value $currency';
+    return CurrencyFormat.money(amount!, currency);
   }
 
   DueTone dueTone(DateTime now) {

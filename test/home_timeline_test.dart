@@ -62,6 +62,7 @@ void main() {
         ),
       ],
       now,
+      displayCurrency: 'USD',
     );
 
     expect(timeline.overdue.map((item) => item.vendor), ['Netflix']);
@@ -70,6 +71,37 @@ void main() {
     expect(timeline.dueThisWeekCount, 2);
     expect(timeline.dueIn30Days, 57.99);
     expect(timeline.next?.vendor, 'Netflix');
+  });
+
+  test('30-day total only includes the display currency', () {
+    final timeline = HomeTimeline.from(
+      [
+        Item(
+          id: 'usd',
+          vendor: 'Netflix',
+          category: ItemCategory.subscription,
+          cycle: ItemCycle.monthly,
+          nextDate: DateTime(2026, 9, 10),
+          status: ItemStatus.active,
+          amount: 15.99,
+          currency: 'USD',
+        ),
+        Item(
+          id: 'eur',
+          vendor: 'EU Gym',
+          category: ItemCategory.subscription,
+          cycle: ItemCycle.monthly,
+          nextDate: DateTime(2026, 9, 12),
+          status: ItemStatus.active,
+          amount: 40,
+          currency: 'EUR',
+        ),
+      ],
+      now,
+      displayCurrency: 'USD',
+    );
+
+    expect(timeline.dueIn30Days, 15.99);
   });
 
   test('markItemPaid rolls a monthly item and completes a warranty', () {
