@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../app/settings_controller.dart';
 import '../../app/vault_scope.dart';
+import '../../core/currency/currency_format.dart';
 import '../../core/extensions/build_context_x.dart';
 import '../../core/extensions/date_time_x.dart';
 import '../../domain/entities/item.dart';
@@ -18,25 +20,38 @@ class HomePage extends StatelessWidget {
     super.key,
     required this.onAdd,
     required this.onScan,
+    required this.settingsController,
   });
 
   final VoidCallback onAdd;
   final VoidCallback onScan;
+  final SettingsController settingsController;
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Item>>(
-      stream: VaultScope.of(context).watchAll(),
-      builder: (context, snapshot) {
-        final items = snapshot.data ?? const <Item>[];
-        final timeline = HomeTimeline.from(items, DateTime.now());
-        if (timeline.isEmpty) {
-          return _EmptyHome(onAdd: onAdd);
-        }
-        return _PopulatedHome(
-          timeline: timeline,
-          onAdd: onAdd,
-          onScan: onScan,
+    return ListenableBuilder(
+      listenable: settingsController,
+      builder: (context, _) {
+        return StreamBuilder<List<Item>>(
+          stream: VaultScope.of(context).watchAll(),
+          builder: (context, snapshot) {
+            final items = snapshot.data ?? const <Item>[];
+            final currency = settingsController.currency;
+            final timeline = HomeTimeline.from(
+              items,
+              DateTime.now(),
+              displayCurrency: currency,
+            );
+            if (timeline.isEmpty) {
+              return _EmptyHome(onAdd: onAdd);
+            }
+            return _PopulatedHome(
+              timeline: timeline,
+              onAdd: onAdd,
+              onScan: onScan,
+              currency: currency,
+            );
+          },
         );
       },
     );
@@ -112,11 +127,13 @@ class _PopulatedHome extends StatelessWidget {
     required this.timeline,
     required this.onAdd,
     required this.onScan,
+    required this.currency,
   });
 
   final HomeTimeline timeline;
   final VoidCallback onAdd;
   final VoidCallback onScan;
+  final String currency;
 
   Future<void> _openItem(BuildContext context, Item item) {
     return Navigator.of(context).push(
@@ -145,7 +162,12 @@ class _PopulatedHome extends StatelessWidget {
           subtitle: now.weekdayDayMonth,
           trailing: const BellButton(),
         ),
-        _HeroCard(timeline: timeline, next: next, now: now),
+        _HeroCard(
+          timeline: timeline,
+          next: next,
+          now: now,
+          currency: currency,
+        ),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -218,17 +240,21 @@ class _HeroCard extends StatelessWidget {
     required this.timeline,
     required this.next,
     required this.now,
+    required this.currency,
   });
 
   final HomeTimeline timeline;
   final Item next;
   final DateTime now;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
     final ledger = context.ledger;
     final count = timeline.dueThisWeekCount;
     final soonEmpty = count == 0 && timeline.dueIn30Days == 0;
+    final nextMoney = next.moneyLabel;
+    final nextDueThisWeek = count > 0;
     final kicker = soonEmpty
         ? 'Nothing due soon'
         : count == 0
@@ -236,9 +262,19 @@ class _HeroCard extends StatelessWidget {
             : count == 1
                 ? '1 due this week'
                 : '$count due this week';
-    final headline = soonEmpty
-        ? 'Next is ${next.vendor}'
-        : '\$${timeline.dueIn30Days.toStringAsFixed(0)} due in 30 days';
+    // Prefer the next payment's own amount+symbol when it's due this week
+    // so mixed currencies never look like one converted total.
+    final String headline;
+    if (soonEmpty) {
+      headline = 'Next is ${next.vendor}';
+    } else if (nextDueThisWeek && nextMoney != null) {
+      headline = nextMoney;
+    } else if (timeline.dueIn30Days > 0) {
+      headline =
+          '${CurrencyFormat.compact(timeline.dueIn30Days, currency)} due in 30 days';
+    } else {
+      headline = 'Next is ${next.vendor}';
+    }
     final sub = soonEmpty
         ? next.relativeDue(now)
         : 'Next is ${next.vendor} — ${next.relativeDue(now)}';

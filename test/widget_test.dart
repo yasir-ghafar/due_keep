@@ -201,7 +201,35 @@ void main() {
 
     expect(find.text('New item'), findsOneWidget);
     expect(find.text('Vendor'), findsOneWidget);
+    expect(find.text('Currency'), findsOneWidget);
+    expect(find.text('USD · \$'), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
+  });
+
+  testWidgets('editor currency defaults from settings and can be changed', (
+    tester,
+  ) async {
+    final settings = SettingsController(
+      store: MemorySettingsStore(currency: 'GBP'),
+    );
+    addTearDown(settings.dispose);
+
+    await tester.pumpWidget(_app(settingsController: settings));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add your first renewal'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Enter manually'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('GBP · £'), findsOneWidget);
+
+    await tester.tap(find.text('Currency').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('EUR · €'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('EUR · €'), findsOneWidget);
   });
 
   testWidgets('light theme uses paper and pine', (tester) async {
@@ -299,7 +327,7 @@ void main() {
     expect(find.text('Default reminder'), findsOneWidget);
     expect(find.text('09:00'), findsOneWidget);
     expect(find.text('Currency'), findsOneWidget);
-    expect(find.text('USD'), findsOneWidget);
+    expect(find.text('USD · \$'), findsOneWidget);
     expect(find.text('DATA'), findsOneWidget);
     expect(find.text('Export CSV'), findsOneWidget);
     expect(find.text('Home screen widget'), findsOneWidget);
@@ -360,12 +388,84 @@ void main() {
 
     await tester.tap(find.text('Currency'));
     await tester.pumpAndSettle();
-    expect(find.text('PKR'), findsOneWidget);
-    await tester.tap(find.text('EUR'));
+    expect(find.text('PKR · Rs'), findsOneWidget);
+    await tester.tap(find.text('EUR · €'));
     await tester.pumpAndSettle();
 
     expect(settings.currency, 'EUR');
-    expect(find.text('EUR'), findsOneWidget);
+    expect(find.text('EUR · €'), findsOneWidget);
+  });
+
+  testWidgets('home hero shows next this-week amount with its currency', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      _app(itemRepository: MemoryItemRepository(seed: _populatedItems())),
+    );
+    await tester.pumpAndSettle();
+
+    // Netflix is overdue (this week) at $15.99 — hero uses that amount+symbol.
+    expect(find.text('\$15.99'), findsWidgets);
+    expect(find.text('Next is Netflix — overdue 2 days'), findsOneWidget);
+  });
+
+  testWidgets('home hero 30-day total uses settings currency only', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final today = _today();
+    final settings = SettingsController(store: MemorySettingsStore());
+    addTearDown(settings.dispose);
+
+    await tester.pumpWidget(
+      _app(
+        settingsController: settings,
+        itemRepository: MemoryItemRepository(
+          seed: [
+            _item(
+              id: 'rent',
+              vendor: 'Landlord',
+              category: ItemCategory.bill,
+              nextDate: today.add(const Duration(days: 20)),
+              amount: 1200,
+            ),
+            Item(
+              id: 'eu-gym',
+              vendor: 'EU Gym',
+              category: ItemCategory.subscription,
+              cycle: ItemCycle.monthly,
+              nextDate: today.add(const Duration(days: 18)),
+              status: ItemStatus.active,
+              amount: 40,
+              currency: 'EUR',
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Nothing due this week → 30-day total is USD-only ($1200), EUR ignored.
+    expect(find.text('\$1200 due in 30 days'), findsOneWidget);
+    expect(find.text('Next is EU Gym — in 18 days'), findsOneWidget);
+
+    await _openTab(tester, 'Settings');
+    await tester.tap(find.text('Currency'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('EUR · €'));
+    await tester.pumpAndSettle();
+
+    await _openTab(tester, 'Home');
+    expect(find.text('€40 due in 30 days'), findsOneWidget);
   });
 
   testWidgets('populated home shows hero, sections, and hides paused items', (
@@ -382,7 +482,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('3 due this week'), findsOneWidget);
-    expect(find.text('\$61 due in 30 days'), findsOneWidget);
+    expect(find.text('\$15.99'), findsWidgets);
     expect(find.text('Next is Netflix — overdue 2 days'), findsOneWidget);
     expect(find.text('OVERDUE'), findsOneWidget);
     expect(find.text('THIS WEEK'), findsOneWidget);

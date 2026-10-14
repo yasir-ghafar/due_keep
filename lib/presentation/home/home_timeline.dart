@@ -10,7 +10,13 @@ class HomeTimeline {
     required this.dueIn30Days,
   });
 
-  factory HomeTimeline.from(List<Item> items, DateTime now) {
+  /// [displayCurrency] limits the 30-day total to matching item currencies
+  /// so mixed vaults are never summed into one number.
+  factory HomeTimeline.from(
+    List<Item> items,
+    DateTime now, {
+    required String displayCurrency,
+  }) {
     final active = items.where((item) => item.status == ItemStatus.active).toList()
       ..sort((a, b) {
         final byDate = a.nextDate.compareTo(b.nextDate);
@@ -33,7 +39,10 @@ class HomeTimeline {
         later.add(item);
       }
       if (days <= 30 && item.amount != null) {
-        dueIn30Days += item.amount!;
+        final code = item.currency ?? displayCurrency;
+        if (code == displayCurrency) {
+          dueIn30Days += item.amount!;
+        }
       }
     }
 

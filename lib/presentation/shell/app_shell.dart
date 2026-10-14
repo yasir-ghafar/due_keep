@@ -53,7 +53,9 @@ class _AppShellState extends State<AppShell> {
           case AddMethod.manual:
             Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => const EditorPage(),
+                builder: (_) => EditorPage(
+                  initialCurrency: widget.settingsController.currency,
+                ),
               ),
             );
           case AddMethod.scan:
@@ -86,7 +88,11 @@ class _AppShellState extends State<AppShell> {
                 child: IndexedStack(
                   index: _tab,
                   children: [
-                    HomePage(onAdd: _openAdd, onScan: _scanLater),
+                    HomePage(
+                      onAdd: _openAdd,
+                      onScan: _scanLater,
+                      settingsController: widget.settingsController,
+                    ),
                     VaultPage(onAdd: _openAdd),
                     SettingsPage(
                       themeController: widget.themeController,

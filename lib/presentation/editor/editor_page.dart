@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../app/settings_controller.dart';
 import '../../app/vault_scope.dart';
+import '../../core/currency/currency_format.dart';
 import '../../core/extensions/build_context_x.dart';
 import '../../core/extensions/date_time_x.dart';
 import '../../core/ids.dart';
@@ -13,7 +15,13 @@ import '../widgets/pine_button.dart';
 
 /// Manual create. Vendor and next date are required to save.
 class EditorPage extends StatefulWidget {
-  const EditorPage({super.key});
+  const EditorPage({
+    super.key,
+    this.initialCurrency = 'USD',
+  });
+
+  /// Defaults from Settings; user can change per item.
+  final String initialCurrency;
 
   @override
   State<EditorPage> createState() => _EditorPageState();
@@ -24,9 +32,16 @@ class _EditorPageState extends State<EditorPage> {
   final _amount = TextEditingController();
   ItemCategory _category = ItemCategory.subscription;
   ItemCycle _cycle = ItemCycle.monthly;
+  late String _currency;
   DateTime? _nextDue;
 
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currency = widget.initialCurrency;
+  }
 
   bool get _canSave =>
       !_saving && _vendor.text.trim().isNotEmpty && _nextDue != null;
@@ -76,6 +91,35 @@ class _EditorPageState extends State<EditorPage> {
     setState(() => _cycle = picked);
   }
 
+  Future<void> _pickCurrency() async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: context.ledger.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final code in SettingsController.currencies)
+                ListTile(
+                  title: Text('$code · ${CurrencyFormat.symbol(code)}'),
+                  trailing: _currency == code
+                      ? Icon(Icons.check, color: ctx.ledger.pine, size: 20)
+                      : null,
+                  onTap: () => Navigator.pop(ctx, code),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    if (picked == null) return;
+    setState(() => _currency = picked);
+  }
+
   Future<void> _save() async {
     if (!_canSave) return;
     setState(() => _saving = true);
@@ -91,7 +135,7 @@ class _EditorPageState extends State<EditorPage> {
           nextDate: _nextDue!,
           status: ItemStatus.active,
           amount: amount,
-          currency: amount == null ? null : 'USD',
+          currency: amount == null ? null : _currency,
           reminderOffsets: const [7, 0],
         ),
       );
@@ -224,14 +268,27 @@ class _EditorPageState extends State<EditorPage> {
                         fontWeight: FontWeight.w500,
                         color: ledger.text,
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'Optional · USD',
+                      decoration: InputDecoration(
+                        hintText:
+                            'Optional · ${CurrencyFormat.symbol(_currency)}',
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         filled: false,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                  _Field(
+                    label: 'Currency',
+                    onTap: _pickCurrency,
+                    child: Text(
+                      '$_currency · ${CurrencyFormat.symbol(_currency)}',
+                      style: texts.bodyLarge?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: ledger.text,
                       ),
                     ),
                   ),
